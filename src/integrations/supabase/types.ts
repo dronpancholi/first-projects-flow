@@ -9,16 +9,270 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          description: string
+          icon_url: string | null
+          id: string
+          name: string
+          xp_reward: number | null
+        }
+        Insert: {
+          description: string
+          icon_url?: string | null
+          id?: string
+          name: string
+          xp_reward?: number | null
+        }
+        Update: {
+          description?: string
+          icon_url?: string | null
+          id?: string
+          name?: string
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          level: number | null
+          longest_streak: number | null
+          status: Database["public"]["Enums"]["user_status"] | null
+          tasks_completed: number | null
+          tasks_missed: number | null
+          theme: string | null
+          timezone: string | null
+          total_points: number | null
+          updated_at: string | null
+          username: string | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          current_streak?: number | null
+          id: string
+          level?: number | null
+          longest_streak?: number | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          tasks_completed?: number | null
+          tasks_missed?: number | null
+          theme?: string | null
+          timezone?: string | null
+          total_points?: number | null
+          updated_at?: string | null
+          username?: string | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          level?: number | null
+          longest_streak?: number | null
+          status?: Database["public"]["Enums"]["user_status"] | null
+          tasks_completed?: number | null
+          tasks_missed?: number | null
+          theme?: string | null
+          timezone?: string | null
+          total_points?: number | null
+          updated_at?: string | null
+          username?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
+      reflections: {
+        Row: {
+          created_at: string | null
+          date: string
+          day_rating: number | null
+          id: string
+          improve: string | null
+          learned: string | null
+          mood: Database["public"]["Enums"]["mood_type"] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          day_rating?: number | null
+          id?: string
+          improve?: string | null
+          learned?: string | null
+          mood?: Database["public"]["Enums"]["mood_type"] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          day_rating?: number | null
+          id?: string
+          improve?: string | null
+          learned?: string | null
+          mood?: Database["public"]["Enums"]["mood_type"] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: Database["public"]["Enums"]["task_category"]
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string
+          id: string
+          is_recurring: boolean | null
+          points: number
+          priority: Database["public"]["Enums"]["task_priority"]
+          recurrence_pattern: string | null
+          start_time: string | null
+          status: Database["public"]["Enums"]["task_status"] | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["task_category"]
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          is_recurring?: boolean | null
+          points: number
+          priority: Database["public"]["Enums"]["task_priority"]
+          recurrence_pattern?: string | null
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["task_category"]
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          is_recurring?: boolean | null
+          points?: number
+          priority?: Database["public"]["Enums"]["task_priority"]
+          recurrence_pattern?: string | null
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["task_status"] | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achieved_at: string | null
+          achievement_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achieved_at?: string | null
+          achievement_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achieved_at?: string | null
+          achievement_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_settings: {
+        Row: {
+          apple_calendar_connected: boolean | null
+          created_at: string | null
+          daily_reminder_time: string | null
+          google_calendar_connected: boolean | null
+          id: string
+          language: string | null
+          notifications_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          apple_calendar_connected?: boolean | null
+          created_at?: string | null
+          daily_reminder_time?: string | null
+          google_calendar_connected?: boolean | null
+          id?: string
+          language?: string | null
+          notifications_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          apple_calendar_connected?: boolean | null
+          created_at?: string | null
+          daily_reminder_time?: string | null
+          google_calendar_connected?: boolean | null
+          id?: string
+          language?: string | null
+          notifications_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_points_for_priority: {
+        Args: { priority: Database["public"]["Enums"]["task_priority"] }
+        Returns: number
+      }
     }
     Enums: {
-      [_ in never]: never
+      mood_type: "Great" | "Good" | "Neutral" | "Bad" | "Terrible"
+      task_category:
+        | "Work"
+        | "Study"
+        | "Fitness"
+        | "Chores"
+        | "Focus"
+        | "Personal"
+        | "Projects"
+        | "Custom"
+      task_priority: "Very High" | "High" | "Medium" | "Low" | "Optional"
+      task_status:
+        | "Pending"
+        | "Completed"
+        | "Completed Late"
+        | "Postponed"
+        | "Missed"
+        | "Skipped"
+        | "Canceled"
+      user_status: "active" | "inactive" | "suspended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +387,29 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      mood_type: ["Great", "Good", "Neutral", "Bad", "Terrible"],
+      task_category: [
+        "Work",
+        "Study",
+        "Fitness",
+        "Chores",
+        "Focus",
+        "Personal",
+        "Projects",
+        "Custom",
+      ],
+      task_priority: ["Very High", "High", "Medium", "Low", "Optional"],
+      task_status: [
+        "Pending",
+        "Completed",
+        "Completed Late",
+        "Postponed",
+        "Missed",
+        "Skipped",
+        "Canceled",
+      ],
+      user_status: ["active", "inactive", "suspended"],
+    },
   },
 } as const
