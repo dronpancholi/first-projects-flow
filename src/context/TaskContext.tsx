@@ -1,205 +1,198 @@
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useReducer, ReactNode } from 'react';
 
-// Define types
+// Types
 export type Priority = 'Very High' | 'High' | 'Medium' | 'Low' | 'Optional';
-
 export type Category = 'Work' | 'Study' | 'Fitness' | 'Meetings' | 'Personal' | 'Projects' | 'Focus Sessions' | 'Chores' | 'Custom';
-
 export type TaskStatus = 'Pending' | 'Completed' | 'Completed Late' | 'Postponed' | 'Missed' | 'Skipped' | 'Canceled';
 
 export interface Task {
   id: string;
   title: string;
-  description: string;
-  dueDate: string;
+  description?: string;
   category: Category;
   priority: Priority;
+  dueDate: string;
   estimatedTime: number; // in minutes
   status: TaskStatus;
-  createdAt: string;
-  completedAt?: string;
   points: number;
+  createdAt: string;
 }
 
-export interface UserStats {
+interface Stats {
+  dailyPoints: number;
+  weeklyPoints: number;
+  monthlyPoints: number;
   totalPoints: number;
+  currentStreak: number;
+  longestStreak: number;
   tasksCompleted: number;
   tasksMissed: number;
-  currentStreak: number;
   level: number;
+  xp: number;
 }
 
-interface State {
+type AppView = 'list' | 'calendar';
+
+interface TaskState {
   tasks: Task[];
-  stats: UserStats;
-  currentView: 'list' | 'calendar';
+  stats: Stats;
+  currentView: AppView;
 }
 
-type Action =
+type TaskAction = 
   | { type: 'ADD_TASK'; payload: Task }
-  | { type: 'UPDATE_TASK'; payload: Task }
   | { type: 'DELETE_TASK'; payload: string }
-  | { type: 'SET_VIEW'; payload: 'list' | 'calendar' }
-  | { type: 'COMPLETE_TASK'; payload: { id: string; status: TaskStatus } };
+  | { type: 'UPDATE_TASK'; payload: Task }
+  | { type: 'COMPLETE_TASK'; payload: { id: string, status: TaskStatus } }
+  | { type: 'SET_VIEW'; payload: AppView };
 
-const initialState: State = {
-  tasks: [],
-  stats: {
-    totalPoints: 0,
-    tasksCompleted: 0,
-    tasksMissed: 0,
-    currentStreak: 0,
-    level: 1,
-  },
-  currentView: 'list',
-};
-
-// Helper function to calculate points based on priority
+// Calculate points based on priority
 export const calculatePoints = (priority: Priority): number => {
   switch (priority) {
-    case 'Very High':
-      return 50;
-    case 'High':
-      return 30;
-    case 'Medium':
-      return 20;
-    case 'Low':
-      return 10;
-    case 'Optional':
-      return 5;
-    default:
-      return 0;
+    case 'Very High': return 50;
+    case 'High': return 30;
+    case 'Medium': return 20;
+    case 'Low': return 10;
+    case 'Optional': return 5;
+    default: return 0;
   }
 };
 
-// Helper function to calculate bonus/penalty based on status
-export const calculatePointsAdjustment = (
-  status: TaskStatus, 
-  basePoints: number
-): number => {
-  switch (status) {
-    case 'Completed':
-      return basePoints * 1.1; // 10% bonus for on-time completion
-    case 'Completed Late':
-      return basePoints * 0.75; // 25% penalty for late completion
-    case 'Postponed':
-      return 0;
-    case 'Missed':
-      return basePoints * -0.5; // 50% penalty for missing a task
-    case 'Skipped':
-    case 'Canceled':
-      return 0;
-    default:
-      return basePoints;
-  }
+// Initial state
+const initialStats: Stats = {
+  dailyPoints: 0,
+  weeklyPoints: 0,
+  monthlyPoints: 0,
+  totalPoints: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  tasksCompleted: 0,
+  tasksMissed: 0,
+  level: 1,
+  xp: 0
 };
 
-// Load data from localStorage
-const loadFromLocalStorage = (): State => {
-  try {
-    const savedState = localStorage.getItem('firstProjectsState');
-    if (savedState) {
-      return JSON.parse(savedState);
-    }
-  } catch (error) {
-    console.error('Error loading state from localStorage:', error);
-  }
-  return initialState;
+const initialState: TaskState = {
+  tasks: [],
+  stats: initialStats,
+  currentView: 'list'
 };
 
-// Save data to localStorage
-const saveToLocalStorage = (state: State) => {
-  try {
-    localStorage.setItem('firstProjectsState', JSON.stringify(state));
-  } catch (error) {
-    console.error('Error saving state to localStorage:', error);
-  }
-};
+// Create context
+const TaskContext = createContext<{
+  state: TaskState;
+  dispatch: React.Dispatch<TaskAction>;
+}>({
+  state: initialState,
+  dispatch: () => null
+});
 
-const reducer = (state: State, action: Action): State => {
+// Reducer
+const taskReducer = (state: TaskState, action: TaskAction): TaskState => {
   switch (action.type) {
-    case 'ADD_TASK': {
-      const newTasks = [...state.tasks, action.payload];
-      return { ...state, tasks: newTasks };
-    }
-    case 'UPDATE_TASK': {
-      const updatedTasks = state.tasks.map((task) =>
-        task.id === action.payload.id ? action.payload : task
-      );
-      return { ...state, tasks: updatedTasks };
-    }
-    case 'DELETE_TASK': {
-      const filteredTasks = state.tasks.filter(
-        (task) => task.id !== action.payload
-      );
-      return { ...state, tasks: filteredTasks };
-    }
-    case 'SET_VIEW': {
-      return { ...state, currentView: action.payload };
-    }
+    case 'ADD_TASK':
+      return {
+        ...state,
+        tasks: [...state.tasks, action.payload]
+      };
+      
+    case 'DELETE_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.filter(task => task.id !== action.payload)
+      };
+      
+    case 'UPDATE_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.map(task =>
+          task.id === action.payload.id ? action.payload : task
+        )
+      };
+      
     case 'COMPLETE_TASK': {
       const { id, status } = action.payload;
-      const taskToUpdate = state.tasks.find(task => task.id === id);
+      const task = state.tasks.find(t => t.id === id);
       
-      if (!taskToUpdate) return state;
+      if (!task) return state;
       
-      const basePoints = taskToUpdate.points;
-      const adjustedPoints = calculatePointsAdjustment(status, basePoints);
+      let pointsChange = 0;
+      let xpChange = 0;
+      let tasksCompleted = state.stats.tasksCompleted;
+      let tasksMissed = state.stats.tasksMissed;
+      let currentStreak = state.stats.currentStreak;
+      let longestStreak = state.stats.longestStreak;
       
-      // Update task status
-      const updatedTasks = state.tasks.map(task => {
-        if (task.id === id) {
-          return {
-            ...task,
-            status,
-            completedAt: status === 'Completed' || status === 'Completed Late' 
-              ? new Date().toISOString() 
-              : undefined
-          };
-        }
-        return task;
-      });
-      
-      // Update stats
-      const updatedStats = { ...state.stats };
-      updatedStats.totalPoints += Math.round(adjustedPoints);
-      
-      if (status === 'Completed' || status === 'Completed Late') {
-        updatedStats.tasksCompleted += 1;
-        updatedStats.currentStreak += 1;
-      } else if (status === 'Missed') {
-        updatedStats.tasksMissed += 1;
-        updatedStats.currentStreak = 0; // Reset streak
+      // Handle points and stats based on completion status
+      switch (status) {
+        case 'Completed':
+          pointsChange = Math.floor(task.points * 1.1); // 10% bonus
+          xpChange = 10;
+          tasksCompleted++;
+          currentStreak++;
+          if (currentStreak > longestStreak) {
+            longestStreak = currentStreak;
+          }
+          break;
+          
+        case 'Completed Late':
+          pointsChange = Math.floor(task.points * 0.75); // 25% penalty
+          xpChange = 5;
+          tasksCompleted++;
+          break;
+          
+        case 'Missed':
+          pointsChange = Math.floor(task.points * -0.5); // 50% penalty
+          tasksMissed++;
+          currentStreak = 0; // Reset streak
+          break;
+          
+        default:
+          // No points change for other statuses
+          break;
       }
       
-      // Update level based on points
-      updatedStats.level = Math.floor(updatedStats.totalPoints / 500) + 1;
+      // Calculate level (every 500 XP)
+      const newXp = state.stats.xp + xpChange;
+      const newLevel = 1 + Math.floor(newXp / 500);
       
       return {
         ...state,
-        tasks: updatedTasks,
-        stats: updatedStats
+        tasks: state.tasks.map(t =>
+          t.id === id ? { ...t, status } : t
+        ),
+        stats: {
+          ...state.stats,
+          totalPoints: state.stats.totalPoints + pointsChange,
+          dailyPoints: state.stats.dailyPoints + pointsChange,
+          weeklyPoints: state.stats.weeklyPoints + pointsChange,
+          monthlyPoints: state.stats.monthlyPoints + pointsChange,
+          tasksCompleted,
+          tasksMissed,
+          currentStreak,
+          longestStreak,
+          xp: newXp,
+          level: newLevel
+        }
       };
     }
+    
+    case 'SET_VIEW':
+      return {
+        ...state,
+        currentView: action.payload
+      };
+      
     default:
       return state;
   }
 };
 
-// Create Context
-const TaskContext = createContext<{
-  state: State;
-  dispatch: React.Dispatch<Action>;
-} | undefined>(undefined);
-
-export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, initialState, loadFromLocalStorage);
-
-  useEffect(() => {
-    saveToLocalStorage(state);
-  }, [state]);
-
+// Provider component
+export const TaskProvider = ({ children }: { children: ReactNode }) => {
+  const [state, dispatch] = useReducer(taskReducer, initialState);
+  
   return (
     <TaskContext.Provider value={{ state, dispatch }}>
       {children}
@@ -207,6 +200,7 @@ export const TaskProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
+// Custom hook
 export const useTasks = () => {
   const context = useContext(TaskContext);
   if (!context) {
