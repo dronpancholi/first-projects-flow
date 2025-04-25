@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTasks, Priority, Category, calculatePoints } from '@/context/TaskContext';
 import { generateTaskId } from '@/utils/taskUtils';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Clock } from 'lucide-react';
+import { Plus, Clock, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTaskForm } from '@/hooks/use-task-form';
 
 const TaskForm: React.FC = () => {
   const { dispatch } = useTasks();
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const { isOpen, closeTaskForm } = useTaskForm();
+  
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -21,6 +23,13 @@ const TaskForm: React.FC = () => {
   const [priority, setPriority] = useState<Priority>('Medium');
   const [estimatedHours, setEstimatedHours] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
+
+  // Reset form when closing
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   const categories: Category[] = [
     'Work', 'Study', 'Fitness', 'Meetings', 
@@ -30,6 +39,16 @@ const TaskForm: React.FC = () => {
   const priorities: Priority[] = [
     'Very High', 'High', 'Medium', 'Low', 'Optional'
   ];
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setDueDate('');
+    setCategory('Personal');
+    setPriority('Medium');
+    setEstimatedHours('');
+    setEstimatedMinutes('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,20 +81,14 @@ const TaskForm: React.FC = () => {
     toast.success('Task added successfully');
     
     // Reset form
-    setTitle('');
-    setDescription('');
-    setDueDate('');
-    setCategory('Personal');
-    setPriority('Medium');
-    setEstimatedHours('');
-    setEstimatedMinutes('');
-    setIsFormOpen(false);
+    resetForm();
+    closeTaskForm();
   };
 
-  if (!isFormOpen) {
+  if (!isOpen) {
     return (
       <Button 
-        onClick={() => setIsFormOpen(true)}
+        onClick={() => useTaskForm.getState().openTaskForm()}
         className="w-full flex items-center justify-center gap-2"
       >
         <Plus size={18} />
@@ -86,8 +99,11 @@ const TaskForm: React.FC = () => {
 
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Create New Task</CardTitle>
+        <Button variant="ghost" size="icon" onClick={closeTaskForm}>
+          <X className="h-4 w-4" />
+        </Button>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
@@ -204,7 +220,7 @@ const TaskForm: React.FC = () => {
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => setIsFormOpen(false)}
+            onClick={closeTaskForm}
           >
             Cancel
           </Button>
